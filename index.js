@@ -1,62 +1,41 @@
+require('dotenv').config()
 const express = require('express')
 const app = express()
+const Note = require('./models/note')
 
-const mongoose = require('mongoose')
+app.post('/api/notes', (request, response) => {
+  const body = request.body
 
-if (process.argv.length<3 && !process.env.DB_CONNECTION_PASSWORD) {
-  console.log('give password as argument')
-  process.exit(1)
-}
+  if (body.content === undefined) {
+    return response.status(400).json({ error: 'content missing' })
+  }
 
-const password = process.env[2] || process.env.DB_CONNECTION_PASSWORD
+  const note = new Note({
+    content: body.content,
+    important: body.important || false,
+  })
 
-const url =
-  `mongodb+srv://mattheweveritt:${password}@travelapp.nb6tpmi.mongodb.net/notes?retryWrites=true&w=majority`
-
-mongoose.set('strictQuery',false)
-mongoose.connect(url)
-
-const noteSchema = new mongoose.Schema({
-  content: String,
-  important: Boolean,
+  note.save().then(savedNote => {
+    response.json(savedNote)
+  })
 })
 
-const Note = mongoose.model('Note', noteSchema)
+app.get('/', (request, response) => {
+  response.send('<h1>Hello World!</h1>')
+})
 
-let notes = [
-    {
-      id: 1,
-      content: "HTML is easy",
-      important: true
-    },
-    {
-      id: 2,
-      content: "Browser can execute only JavaScript",
-      important: false
-    },
-    {
-      id: 3,
-      content: "GET and POST are the most important methods of HTTP protocol",
-      important: true
-    }
-  ]
-
-  app.get('/', (request, response) => {
-    response.send('<h1>Hello World!</h1>')
+app.get('/api/notes/:id', (request, response) => {
+  Note.findById(request.params.id).then(note => {
+    response.json(note)
   })
-  
-  app.get('/api/notes', (request, response) => {
-    Note.find({}).then(notes => {
-      response.json(notes)
-    })
-  })
+})
 
-  const unknownEndpoint = (request, response) => {
-    response.status(404).send({ error: 'unknown endpoint' })
-  }
-  
-  app.use(unknownEndpoint)
+const unknownEndpoint = (request, response) => {
+  response.status(404).send({ error: 'unknown endpoint' })
+}
 
-const PORT = process.env.PORT || 3001
+app.use(unknownEndpoint)
+
+const PORT = process.env.PORT
 app.listen(PORT)
 console.log(`Server running on port ${PORT}`)
