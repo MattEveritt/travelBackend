@@ -3,7 +3,7 @@ const app = express()
 
 const mongoose = require('mongoose')
 
-if (process.argv.length<3) {
+if (process.argv.length<3 && !process.env.DB_CONNECTION_PASSWORD) {
   console.log('give password as argument')
   process.exit(1)
 }
