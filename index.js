@@ -8,7 +8,7 @@ if (process.argv.length<3) {
   process.exit(1)
 }
 
-const password = process.argv[2]
+const password = process.env[2] || process.env.DB_CONNECTION_PASSWORD
 
 const url =
   `mongodb+srv://mattheweveritt:${password}@travelapp.nb6tpmi.mongodb.net/notes?retryWrites=true&w=majority`
