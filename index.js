@@ -1,6 +1,28 @@
 const express = require('express')
 const app = express()
 
+const mongoose = require('mongoose')
+
+if (process.argv.length<3) {
+  console.log('give password as argument')
+  process.exit(1)
+}
+
+const password = process.argv[2]
+
+const url =
+  `mongodb+srv://mattheweveritt:${password}@travelapp.nb6tpmi.mongodb.net/notes?retryWrites=true&w=majority`
+
+mongoose.set('strictQuery',false)
+mongoose.connect(url)
+
+const noteSchema = new mongoose.Schema({
+  content: String,
+  important: Boolean,
+})
+
+const Note = mongoose.model('Note', noteSchema)
+
 let notes = [
     {
       id: 1,
@@ -24,8 +46,9 @@ let notes = [
   })
   
   app.get('/api/notes', (request, response) => {
-    console.log('howdy');
-    response.json(notes)
+    Note.find({}).then(notes => {
+      response.json(notes)
+    })
   })
 
   const unknownEndpoint = (request, response) => {
