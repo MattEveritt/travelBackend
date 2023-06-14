@@ -14,7 +14,7 @@ notesRouter.get('/:id', (request, response, next) => {
       if (note) {
         response.json(note);
       } else {
-        response.status(404).end();
+        return response.status(404).end();
       }
     })
     .catch(error => next(error));
@@ -41,7 +41,7 @@ notesRouter.post('/', async (request, response) => {
 notesRouter.delete('/:id', (request, response, next) => {
   Note.findByIdAndRemove(request.params.id)
     .then(() => {
-      response.status(204).end();
+      return response.status(204).end();
     })
     .catch(error => next(error));
 });

@@ -2,6 +2,9 @@ const mongoose = require('mongoose');
 const uniqueValidator = require('mongoose-unique-validator');
 
 const userSchema = new mongoose.Schema({
+  email: {
+    type: String,
+  },
   username: {
     type: String,
     required: true,
@@ -9,10 +12,10 @@ const userSchema = new mongoose.Schema({
   },
   name: String,
   passwordHash: String,
-  notes: [
+  trips: [
     {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Note'
+      ref: 'Trip'
     }
   ],
 });
