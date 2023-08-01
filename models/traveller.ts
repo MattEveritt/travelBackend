@@ -4,6 +4,7 @@ import uniqueValidator from 'mongoose-unique-validator';
 interface TravellerDocument extends Document {
   name: string,
   surname: string,
+  middleNames: string,
   birthdate: Date,
   user: string,
   travellerId: string,
@@ -19,6 +20,10 @@ const travellerSchema = new mongoose.Schema<TravellerDocument>({
   surname: {
     type: String,
     required: true,
+    minlength: 1
+  },
+  middleNames: {
+    type: String,
     minlength: 1
   },
   birthdate: Date,
