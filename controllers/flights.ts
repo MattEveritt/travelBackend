@@ -150,7 +150,7 @@ flightsRouter.get('/priceanalysis', async (request: Request, response: Response,
 })
 
 flightsRouter.get('/checkinlink', async (request: Request, response: Response, next: NextFunction) => {
-    const {airlineCode} = request.body;
+    const {airlineCode}: {airlineCode: string} = request.body;
 
     // What is the URL to my online check-in?
     amadeus.referenceData.urls.checkinLinks.get({
@@ -164,7 +164,7 @@ flightsRouter.get('/checkinlink', async (request: Request, response: Response, n
 })
 
 flightsRouter.get('/searchcity', async (request: Request, response: Response, next: NextFunction) => {
-    const {searchString} = request.body;
+    const {searchString}: {searchString: string} = request.body;
 
     // finds cities that match a specific word or string of letters.
     amadeus.referenceData.locations.cities.get({
@@ -178,7 +178,7 @@ flightsRouter.get('/searchcity', async (request: Request, response: Response, ne
 })
 
 flightsRouter.get('/fetchbooking', async (request: Request, response: Response, next: NextFunction) => {
-    const {flightOrderId} = request.body;
+    const {flightOrderId}: {flightOrderId: string} = request.body;
 
     // retrieve a booked flight
     amadeus.booking.flightOrder(flightOrderId).get().then((res: AmadeusResponse) => {
@@ -190,7 +190,7 @@ flightsRouter.get('/fetchbooking', async (request: Request, response: Response, 
 })
 
 flightsRouter.delete('/deletebooking', async (request: Request, response: Response, next: NextFunction) => {
-    const {flightOrderId} = request.body;
+    const {flightOrderId}: {flightOrderId: string} = request.body;
 
     // delete a booked flight
     amadeus.booking.flightOrder(flightOrderId).delete().then((res: AmadeusResponse) => {
@@ -202,11 +202,28 @@ flightsRouter.delete('/deletebooking', async (request: Request, response: Respon
 })
 
 flightsRouter.get('/airlinenamelookup', async (request: Request, response: Response, next: NextFunction) => {
-    const {airlineCode} = request.body;
+    const {airlineCode}: {airlineCode: string} = request.body;
 
     // What's the airline name for the IATA code BA?
     amadeus.referenceData.airlines.get({
         airlineCodes: airlineCode // string e.g. 'BA'
+    }).then((res: AmadeusResponse) => {
+        console.log(res.body)
+        return response.status(200).json(res.body)
+    }).catch((e: any) => {
+        return next(e);
+    });
+})
+
+flightsRouter.get('/recommendedlocation', async (request: Request, response: Response, next: NextFunction) => {
+    const {cityCodes, travelerCountryCode}: {cityCodes: string, travelerCountryCode: string} = request.body;
+
+    amadeus.referenceData.recommendedLocations.get({
+        cityCodes: cityCodes,
+        travelerCountryCode: travelerCountryCode
+    }).then((res: AmadeusResponse) => {
+        console.log(res.body)
+        return response.status(200).json(res.body)
     }).catch((e: any) => {
         return next(e);
     });
