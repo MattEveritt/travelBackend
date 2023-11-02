@@ -5,7 +5,7 @@ import User from '../models/user';
 const tripsRouter: Router = Router();
 
 tripsRouter.post('/saveTrip', async (request: Request, response: Response, next: NextFunction) => {
-  const { destination, budget, dates, travellers, userId } = request.body;
+  const { type, departureAirport, destinations, dates, travellers, transport, userId } = request.body;
 
   const user = await User.findById(userId);
 
@@ -14,10 +14,12 @@ tripsRouter.post('/saveTrip', async (request: Request, response: Response, next:
   }
 
   const trip = new Trip({
-    destination,
-    budget,
+    type,
+    departureAirport,
+    destinations,
     dates,
     travellers,
+    transport,
     user: user._id,
   });
 
@@ -27,13 +29,13 @@ tripsRouter.post('/saveTrip', async (request: Request, response: Response, next:
     await user.save();
 
     response.status(201).json(savedTrip);
-  } catch (e) {
-    (e: {}) => next(e);
+  } catch (e: any) {
+    return next(e);
   }
 });
 
 tripsRouter.put('/updateTrip', async (request: Request, response: Response, next: NextFunction) => {
-  const { destination, budget, dates, travellers, userId, tripId } = request.body;
+  const { type, departureAirport, destinations, dates, travellers, transport, userId, tripId } = request.body;
 
   const trip = await Trip.findById(tripId);
 
@@ -41,10 +43,12 @@ tripsRouter.put('/updateTrip', async (request: Request, response: Response, next
     return next(new Error('trip not found in updateTrip controller'))
   }
 
-  trip.destination = destination;
-  trip.budget = budget;
+  trip.type = type;
+  trip.departureAirport = departureAirport;
+  trip.destinations = destinations;
   trip.dates = dates;
   trip.travellers = travellers;
+  trip.transport = transport;
   trip.userId = userId;
 
   await trip.save().then(() => {

@@ -1,7 +1,7 @@
 import bcrypt from 'bcrypt';
 import {Router, Request, Response, NextFunction} from 'express'
 import User from '../models/user';
-import Traveller from '../models/user';
+import Traveller from '../models/traveller';
 
 const usersRouter: Router = Router();
 
@@ -16,19 +16,17 @@ usersRouter.post('/', async (request: Request, response: Response, next: NextFun
 
   const saltRounds = 10;
   const passwordHash = await bcrypt.hash(password, saltRounds);
-
   const user = new User({
     email,
-    username: username,
+    username,
     name,
     passwordHash,
   });
 
   const traveller = new Traveller({
-    name: user.name,
-    surname: user.name,
+    name: name,
+    surname: username,
   });
-
   try {
     const savedTraveller = await traveller.save();
     if (!savedTraveller) {

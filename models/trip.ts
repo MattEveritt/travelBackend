@@ -1,27 +1,46 @@
 import mongoose, { Document, Model } from 'mongoose';
 
 interface TripDocument extends Document {
-  destination: string;
-  budget?: number;
-  dates: Date;
+  type: string;
+  departureAirport: {},
+  destinations: [];
+  dates: string[];
   travellers: Array<Object>;
+  transport: string;
   userId: string,
 }
 
 const tripSchema = new mongoose.Schema<TripDocument>({
-  destination: {
+  type: {
     type: String,
+    required: true,
+    minLength: 1,
+  },
+  departureAirport: {
+    type: {},
+    required: true,
+  },
+  destinations: {
+    type: [],
     required: true,
     minlength: 1
   },
-  budget: Number,
-  dates: Date,
+  dates: {
+    type: [],
+    required: true,
+    minlength: 1
+  },
   travellers: [
     {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User'
     }
   ],
+  transport: {
+    type: String,
+    required: true,
+    minLength: 1,
+  },
   userId: String,
 });
 

@@ -105,7 +105,9 @@ flightsRouter.post('/flightseatmap', async (request: Request, response: Response
 })
 
 flightsRouter.get('/closestairport', async (request: Request, response: Response, next: NextFunction) => {
-    const {lat, long} = request.body;
+    const {lat, long} = request.query;
+
+    console.log(request.body)
 
     amadeus.referenceData.locations.airports.get({
         longitude: long, //number
@@ -169,6 +171,21 @@ flightsRouter.get('/searchcity', async (request: Request, response: Response, ne
     // finds cities that match a specific word or string of letters.
     amadeus.referenceData.locations.cities.get({
         keyword: searchString // string e.g. 'Paris'
+    }).then((res: AmadeusResponse) => {
+        console.log(res.body)
+        return response.status(200).json(res.body)
+    }).catch((e: any) => {
+        return next(e);
+    });
+})
+
+flightsRouter.get('/searchairport', async (request: Request, response: Response, next: NextFunction) => {
+    const {searchString}: {searchString?: string} = request.query;
+
+    // finds airports that match a specific word or string of letters.
+    amadeus.referenceData.locations.get({
+        keyword: searchString, // string e.g. 'Paris'
+        subType: Amadeus.location.any
     }).then((res: AmadeusResponse) => {
         console.log(res.body)
         return response.status(200).json(res.body)
