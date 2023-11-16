@@ -5,9 +5,10 @@ interface UserDocument extends Document{
   email: string,
   username: string,
   name: string,
+  surname: string,
   passwordHash: string,
-  trips: Array<Object>,
-  travellers: Array<Object>,
+  trips: Array<object>,
+  travellers: Array<object>,
 }
 
 const userSchema = new mongoose.Schema<UserDocument>({
@@ -16,10 +17,9 @@ const userSchema = new mongoose.Schema<UserDocument>({
   },
   username: {
     type: String,
-    required: true,
-    unique: true
   },
   name: String,
+  surname: String,
   passwordHash: String,
   trips: [
     {

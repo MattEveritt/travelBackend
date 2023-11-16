@@ -11,6 +11,7 @@ usersRouter.post('/', async (request: Request, response: Response, next: NextFun
   const userExists = await User.findOne({ email: email });
 
   if (userExists) {
+    next(new Error('Email address already registered'));
     return response.status(400).json('Email address already registered');
   }
 
@@ -33,6 +34,7 @@ usersRouter.post('/', async (request: Request, response: Response, next: NextFun
       return next(new Error('Traveller not found in users controller'));
     }
     user.travellers = user.travellers.concat(savedTraveller._id);
+    user._id = savedTraveller._id;
     const savedUser = await user.save();
 
     if(!savedUser) {
@@ -66,27 +68,24 @@ usersRouter.get('/travellers', async (request: Request, response: Response, next
 
   type TravellerObject = {
     id?: string,
-    name?: string,
+    name?: string | undefined,
     surname?: string,
     middleNames?: string,
     birthdate?: string,
   }
 
-  let travellers = {};
+  const travellers: TravellerObject[] = [];
   
   user.travellers.map((traveller: TravellerObject) => {
     if (!traveller.id) return null;
     const id = traveller.id;
-    travellers = {
-      ...travellers,
-      [id]: {
+    travellers.push({
         name: traveller.name,
         surname: traveller.surname,
         middleNames: traveller.middleNames,
         birthdate: traveller.birthdate,
         id: id,
-      }
-    }
+    });
   })
 
   return response.status(200).json(travellers);

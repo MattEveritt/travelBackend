@@ -46,14 +46,21 @@ const getTokenFrom = (request: Request) => {
 };
 
 const tokenVerification = (request: Request, response: Response, next: NextFunction) => {
-  if (request.path !== '/api/login' && request.path !== '/api/refresh' && request.path !== '/api/users') {
+  if(
+    !request.path.startsWith('/api/login')
+    && !request.path.startsWith('/api/refresh')
+    && request.path !== '/api/users'
+    && !request.path.startsWith('/api/flights')
+    && !request.path.startsWith('/api/hotels')
+    && !request.path.startsWith('/api/transfers')) {
+
     const SECRET = process.env.SECRET || '';
     const decodedToken = jwt.verify(getTokenFrom(request), SECRET) as JwtPayload;
     if (!decodedToken.id) {
       return response.status(401).json({ error: 'token invalid' });
     }
   }
-  next();
+  return next();
 };
 
 export default {

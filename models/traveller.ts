@@ -14,12 +14,12 @@ interface TravellerDocument extends Document {
 const travellerSchema = new mongoose.Schema<TravellerDocument>({
   name: {
     type: String,
-    required: true,
+    required: false,
     minlength: 1
   },
   surname: {
     type: String,
-    required: true,
+    required: false,
     minlength: 1
   },
   middleNames: {
