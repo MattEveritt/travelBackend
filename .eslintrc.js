@@ -7,8 +7,10 @@ module.exports = {
   'extends': 'eslint:recommended',
   'overrides': [
   ],
+  'parser': '@typescript-eslint/parser',
   'parserOptions': {
-    'ecmaVersion': 'latest'
+    'ecmaVersion': 'latest',
+    'sourceType': 'module'
   },
   'rules': {
     'indent': [
