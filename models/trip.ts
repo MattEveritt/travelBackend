@@ -1,4 +1,4 @@
-import mongoose, { Document, Model } from 'mongoose';
+import mongoose, { Document, Model, Schema, model} from 'mongoose';
 
 interface TripDocument extends Document {
   type: string;
@@ -6,13 +6,13 @@ interface TripDocument extends Document {
   destinations: [];
   dates: string[];
   travellers: Array<Object>;
-  transport: string;
+  transport: string[];
   userId: string,
 }
 
-const tripSchema = new mongoose.Schema<TripDocument>({
+const tripSchema = new Schema<TripDocument>({
   type: {
-    type: String,
+    type: Schema.Types.String,
     required: true,
     minLength: 1,
   },
@@ -32,16 +32,15 @@ const tripSchema = new mongoose.Schema<TripDocument>({
   },
   travellers: [
     {
-      type: mongoose.Schema.Types.ObjectId,
+      type: Schema.Types.ObjectId,
       ref: 'User'
     }
   ],
   transport: {
-    type: String,
+    type: [],
     required: true,
-    minLength: 1,
   },
-  userId: String,
+  userId: Schema.Types.String,
 });
 
 tripSchema.set('toJSON', {
@@ -52,6 +51,6 @@ tripSchema.set('toJSON', {
   }
 });
 
-const Trip: Model<TripDocument> = mongoose.model<TripDocument>('Trip', tripSchema);
+const Trip: Model<TripDocument> = model<TripDocument>('Trip', tripSchema);
 
 export default Trip;
