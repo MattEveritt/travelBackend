@@ -33,7 +33,7 @@ travellersRouter.post('/savetraveller', async (request: Request, response: Respo
 });
 
 travellersRouter.put('/updatetraveller', async (request: Request, response: Response, next: NextFunction) => {
-  const { name, surname, middleNames, birthdate, userId, travellerId } = request.body;
+  const { firstName, lastName, middleNames, birthdate, userId, travellerId } = request.body;
 
   const traveller = await Traveller.findById(travellerId);
 
@@ -41,8 +41,8 @@ travellersRouter.put('/updatetraveller', async (request: Request, response: Resp
     return next(new Error('traveller not found'))
   }
 
-  traveller.name = name;
-  traveller.surname = surname;
+  traveller.firstName = firstName;
+  traveller.lastName = lastName;
   traveller.middleNames = middleNames;
   traveller.birthdate = birthdate;
   traveller.travellerId = travellerId;

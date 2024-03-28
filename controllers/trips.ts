@@ -5,7 +5,7 @@ import User from '../models/user';
 const tripsRouter: Router = Router();
 
 tripsRouter.post('/saveTrip', async (request: Request, response: Response, next: NextFunction) => {
-  const { type, departureAirport, destinations, dates, travellers, transport, userId } = request.body;
+  const { type, departureAirport, destinations, dates, travellers, transport, includeAccomodation, userId } = request.body;
 
   const user = await User.findById(userId);
 
@@ -20,12 +20,13 @@ tripsRouter.post('/saveTrip', async (request: Request, response: Response, next:
     dates,
     travellers,
     transport,
+    includeAccomodation,
     user: user._id,
   });
 
   try {
     const savedTrip = await trip.save();
-    user.trips = user.trips.concat(savedTrip._id);
+    user.trips = user.trips.concat(savedTrip);
     await user.save();
 
     response.status(201).json(savedTrip);
@@ -35,7 +36,7 @@ tripsRouter.post('/saveTrip', async (request: Request, response: Response, next:
 });
 
 tripsRouter.put('/updateTrip', async (request: Request, response: Response, next: NextFunction) => {
-  const { type, departureAirport, destinations, dates, travellers, transport, userId, tripId } = request.body;
+  const { type, departureAirport, destinations, dates, travellers, transport, userId, includeAccomodation, tripId } = request.body;
 
   const trip = await Trip.findById(tripId);
 
@@ -49,6 +50,7 @@ tripsRouter.put('/updateTrip', async (request: Request, response: Response, next
   trip.dates = dates;
   trip.travellers = travellers;
   trip.transport = transport;
+  trip.includeAccomodation = includeAccomodation;
   trip.userId = userId;
 
   await trip.save().then(() => {

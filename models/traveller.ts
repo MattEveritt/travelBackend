@@ -2,32 +2,35 @@ import mongoose, { Date, Document, Model } from 'mongoose';
 import uniqueValidator from 'mongoose-unique-validator';
 
 interface TravellerDocument extends Document {
-  name: string,
-  surname: string,
+  firstName: string,
+  lastName: string,
   middleNames: string,
   birthdate: Date,
-  user: string,
+  user: {},
   travellerId: string,
   userId: string,
 }
 
 const travellerSchema = new mongoose.Schema<TravellerDocument>({
-  name: {
-    type: String,
-    required: false,
+  firstName: {
+    type: mongoose.Schema.Types.String,
+    required: true,
     minlength: 1
   },
-  surname: {
-    type: String,
-    required: false,
+  lastName: {
+    type: mongoose.Schema.Types.String,
+    required: true,
     minlength: 1
   },
   middleNames: {
-    type: String,
+    type: mongoose.Schema.Types.String,
     minlength: 1
   },
   birthdate: Date,
-  user: String,
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
 });
 
 travellerSchema.plugin(uniqueValidator);

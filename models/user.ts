@@ -4,23 +4,19 @@ import uniqueValidator from 'mongoose-unique-validator';
 interface UserDocument extends Document{
   email: string,
   username: string,
-  name: string,
-  surname: string,
+  firstName: string,
+  lastName: string,
   passwordHash: string,
-  trips: Array<object>,
-  travellers: Array<object>,
+  trips: {}[],
+  travellers: {}[],
 }
 
 const userSchema = new mongoose.Schema<UserDocument>({
-  email: {
-    type: String,
-  },
-  username: {
-    type: String,
-  },
-  name: String,
-  surname: String,
-  passwordHash: String,
+  email: mongoose.Schema.Types.String,
+  username: mongoose.Schema.Types.String,
+  firstName: mongoose.Schema.Types.String,
+  lastName: mongoose.Schema.Types.String,
+  passwordHash: mongoose.Schema.Types.String,
   trips: [
     {
       type: mongoose.Schema.Types.ObjectId,

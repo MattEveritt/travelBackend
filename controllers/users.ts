@@ -6,7 +6,7 @@ import Traveller from '../models/traveller';
 const usersRouter: Router = Router();
 
 usersRouter.post('/', async (request: Request, response: Response, next: NextFunction) => {
-  const { email, username, name, password } = request.body;
+  const { email, firstName, lastName, password } = request.body;
 
   const userExists = await User.findOne({ email: email });
 
@@ -19,15 +19,17 @@ usersRouter.post('/', async (request: Request, response: Response, next: NextFun
   const passwordHash = await bcrypt.hash(password, saltRounds);
   const user = new User({
     email,
-    username,
-    name,
+    firstName,
+    lastName,
     passwordHash,
+    userName: email,
   });
 
   const traveller = new Traveller({
-    name: name,
-    surname: username,
+    firstName: firstName,
+    lastName: lastName,
   });
+
   try {
     const savedTraveller = await traveller.save();
     if (!savedTraveller) {
@@ -68,8 +70,8 @@ usersRouter.get('/travellers', async (request: Request, response: Response, next
 
   type TravellerObject = {
     id?: string,
-    name?: string | undefined,
-    surname?: string,
+    firstName?: string | undefined,
+    lastName?: string,
     middleNames?: string,
     birthdate?: string,
   }
@@ -80,8 +82,8 @@ usersRouter.get('/travellers', async (request: Request, response: Response, next
     if (!traveller.id) return null;
     const id = traveller.id;
     travellers.push({
-        name: traveller.name,
-        surname: traveller.surname,
+        firstName: traveller.firstName,
+        lastName: traveller.lastName,
         middleNames: traveller.middleNames,
         birthdate: traveller.birthdate,
         id: id,

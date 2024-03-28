@@ -1,249 +1,378 @@
-import {Router, Request, Response, NextFunction} from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
+import {
+    getTravelersArray,
+    getOriginDestinationsArray,
+    callAmadeusService,
+} from './utils';
+import { GetFlightsQuery, AmadeusResponse } from './types';
 const Amadeus = require('amadeus');
 
 var amadeus = new Amadeus();
 
 const flightsRouter: Router = Router();
 
-type AmadeusResponse = {
-    body: {
-        data: {}
-    },
-    data: {},
-    status: number,
-}
+flightsRouter.get(
+    '/getflights',
+    async (request: Request, response: Response, next: NextFunction) => {
+        let {
+            originLocationCodes,
+            destinationLocationCodes,
+            departureDates,
+            adults,
+            children,
+            seniors,
+            young,
+            heldInfants,
+            associatedAdultIds,
+            seatedInfants,
+            students,
+            currencyCode = 'USD',
+        }: GetFlightsQuery = request.query as unknown as GetFlightsQuery;
 
-flightsRouter.get('/getflights', async (request: Request, response: Response, next: NextFunction) => {
-    const {originLocationCode, destinationLocationCode, departureDate, adults, max} = request.query;
-    amadeus.shopping.flightOffersSearch.get({
-        originLocationCode,
-        destinationLocationCode,
-        departureDate,
-        adults,
-        max,
-    }).then((res: AmadeusResponse) => {
-        console.log(res.body)
-        return response.status(200).json(res.body)
-    }).catch((e: any) => {
-        return next(e);
-    });
-});
-
-flightsRouter.post('/confirmflightprice', async (request: Request, response: Response, next: NextFunction) => {
-    const {body} = request.body;
-    amadeus.shopping.flightOffers.pricing.post(
-        JSON.stringify({
-          'data': {
-            'type': 'flight-offers-pricing',
-            'flightOffers': [body]
-          }
-        })
-      ).then((res: AmadeusResponse) => {
-        console.log(res.body)
-        return response.status(200).json(res.body)
-    }).catch((e: any) => {
-        return next(e);
-    });
-})
-
-flightsRouter.post('/bookflight', async (request: Request, response: Response, next: NextFunction) => {
-    const {flightOffer, travellers} = request.body;
-
-    amadeus.booking.flightOrders.post(
-        JSON.stringify({
-          'data': {
-            'type': 'flight-order',
-            'flightOffers': [flightOffer],
-            'travelers': travellers
-            }
-        })
-    ).then((res: AmadeusResponse) => {
-        console.log(res.body)
-        return response.status(200).json(res.body)
-    }).catch((e: any) => {
-        return next(e);
-    });
-})
-
-flightsRouter.post('/flightupsell', async (request: Request, response: Response, next: NextFunction) => {
-    const {flightOffer, binNumber, flightOfferId} = request.body;
-
-    amadeus.shopping.flightOffers.upselling.post(
-        JSON.stringify({
-        "data": {
-            "type": "flight-offers-upselling",
-            "flightOffers": [flightOffer],
-            "payments": [
-                {
-                    "brand": "VISA_IXARIS",
-                    "binNumber": binNumber,
-                    "flightOfferIds": [flightOfferId]
-                }
-            ]
+        // Ensure originLocationCodes and destinationLocationCodes are arrays
+        if (typeof originLocationCodes === 'string') {
+            originLocationCodes = [originLocationCodes];
         }
-    })).then((res: AmadeusResponse) => {
-        console.log(res.body)
-        return response.status(200).json(res.body)
-    }).catch((e: any) => {
-        return next(e);
-    });
-})
+        if (typeof destinationLocationCodes === 'string') {
+            destinationLocationCodes = [destinationLocationCodes];
+        }
 
-flightsRouter.post('/flightseatmap', async (request: Request, response: Response, next: NextFunction) => {
-    const {flightOffer} = request.body;
+        const originDestinations = getOriginDestinationsArray(
+            originLocationCodes,
+            destinationLocationCodes,
+            departureDates,
+        );
 
-    amadeus.shopping.seatmaps.post(
-        JSON.stringify({
-            'data': [flightOffer]
-        })
-    ).then((res: AmadeusResponse) => {
-        console.log(res.body)
-        return response.status(200).json(res.body)
-    }).catch((e: any) => {
-        return next(e);
-    });
-})
+        const travelers = getTravelersArray(
+            adults,
+            children,
+            seniors,
+            young,
+            heldInfants,
+            seatedInfants,
+            students,
+            associatedAdultIds,
+        );
 
-flightsRouter.get('/closestairport', async (request: Request, response: Response, next: NextFunction) => {
-    const {lat, long} = request.query;
+        const searchCriteria = {
+            addOneWayOffers: originDestinations.length === 2 ? true : false,
+            maxFlightOffers: 50,
+            allowAlternativeFareOptions: true,
+            additionalInformation: {
+                chargeableCheckedBags: true,
+                brandedFares: true,
+            },
+        };
+        const sources = ['GDS'];
 
-    console.log(request.body)
+        const getFlightOffersBody = {
+            originDestinations,
+            currencyCode,
+            travelers,
+            searchCriteria,
+            sources,
+        };
 
-    amadeus.referenceData.locations.airports.get({
-        longitude: long, //number
-        latitude: lat, //number
-    }).then((res: AmadeusResponse) => {
-        console.log(res.body)
-        return response.status(200).json(res.body)
-    }).catch((e: any) => {
-        return next(e);
-    });
-})
+        callAmadeusService(
+            amadeus.shopping.flightOffersSearch,
+            'post',
+            JSON.stringify(getFlightOffersBody),
+            response,
+            next,
+        );
+    },
+);
 
-flightsRouter.get('/cheapestdates', async (request: Request, response: Response, next: NextFunction) => {
-    const {origin, destination} = request.body;
+flightsRouter.post(
+    '/confirmflightprice',
+    async (request: Request, response: Response, next: NextFunction) => {
+        const { body } = request.body;
+        const confirmFlightBody = {
+            data: {
+                type: 'flight-offers-pricing',
+                flightOffers: [body],
+            },
+        };
+        callAmadeusService(
+            amadeus.shopping.flightOffers.pricing,
+            'post',
+            confirmFlightBody,
+            response,
+            next,
+        );
+    },
+);
 
-    // Find cheapest dates to fly
-    amadeus.shopping.flightDates.get({
-        origin: origin, //string
-        destination: destination //string
-    }).then((res: AmadeusResponse) => {
-        console.log(res.body)
-        return response.status(200).json(res.body)
-    }).catch((e: any) => {
-        return next(e);
-    });
-})
+flightsRouter.post(
+    '/bookflight',
+    async (request: Request, response: Response, next: NextFunction) => {
+        const { flightOffer, travellers } = request.body;
 
-flightsRouter.get('/priceanalysis', async (request: Request, response: Response, next: NextFunction) => {
-    const {originIataCode , destinationIataCode, departureDate} = request.body;
+        const flightOrderBody = {
+            data: {
+                type: 'flight-order',
+                flightOffers: [flightOffer],
+                travellers: travellers,
+            },
+        };
 
-    // Am I getting a good deal on this flight?
-    amadeus.analytics.itineraryPriceMetrics.get({
-        originIataCode: originIataCode, //string
-        destinationIataCode: destinationIataCode, //string
-        departureDate: departureDate, //string e.g. '2022-01-13'
-    }).then((res: AmadeusResponse) => {
-        console.log(res.body)
-        return response.status(200).json(res.body)
-    }).catch((e: any) => {
-        return next(e);
-    });
-})
+        callAmadeusService(
+            amadeus.booking.flightOrders,
+            'post',
+            flightOrderBody,
+            response,
+            next,
+        );
+    },
+);
 
-flightsRouter.get('/checkinlink', async (request: Request, response: Response, next: NextFunction) => {
-    const {airlineCode}: {airlineCode: string} = request.body;
+flightsRouter.post(
+    '/flightupsell',
+    async (request: Request, response: Response, next: NextFunction) => {
+        const { flightOffer, binNumber, flightOfferId } = request.body;
 
-    // What is the URL to my online check-in?
-    amadeus.referenceData.urls.checkinLinks.get({
-        airlineCode: airlineCode // string e.g. 'BA'
-    }).then((res: AmadeusResponse) => {
-        console.log(res.body)
-        return response.status(200).json(res.body)
-    }).catch((e: any) => {
-        return next(e);
-    });
-})
+        const flightOffersUpsellingBody = {
+            data: {
+                type: 'flight-offers-upselling',
+                flightOffers: [flightOffer],
+                payments: [
+                    {
+                        brand: 'VISA_IXARIS',
+                        binNumber: binNumber,
+                        flightOfferIds: [flightOfferId],
+                    },
+                ],
+            },
+        };
 
-flightsRouter.get('/searchcity', async (request: Request, response: Response, next: NextFunction) => {
-    const {searchString}: {searchString: string} = request.body;
+        callAmadeusService(
+            amadeus.shopping.flightOffers.upselling,
+            'post',
+            flightOffersUpsellingBody,
+            response,
+            next,
+        );
+    },
+);
 
-    // finds cities that match a specific word or string of letters.
-    amadeus.referenceData.locations.cities.get({
-        keyword: searchString // string e.g. 'Paris'
-    }).then((res: AmadeusResponse) => {
-        console.log(res.body)
-        return response.status(200).json(res.body)
-    }).catch((e: any) => {
-        return next(e);
-    });
-})
+flightsRouter.post(
+    '/flightofferseatmap',
+    async (request: Request, response: Response, next: NextFunction) => {
+        const { flightOffer } = request.body;
 
-flightsRouter.get('/searchairport', async (request: Request, response: Response, next: NextFunction) => {
-    const {searchString}: {searchString?: string} = request.query;
+        console.log(flightOffer);
+        callAmadeusService(
+            amadeus.shopping.seatmaps,
+            'post',
+            JSON.stringify({
+                data: [flightOffer],
+            }),
+            response,
+            next,
+        );
+    },
+);
 
-    // finds airports that match a specific word or string of letters.
-    amadeus.referenceData.locations.get({
-        keyword: searchString, // string e.g. 'Paris'
-        subType: Amadeus.location.any
-    }).then((res: AmadeusResponse) => {
-        console.log(res.body)
-        return response.status(200).json(res.body)
-    }).catch((e: any) => {
-        return next(e);
-    });
-})
+flightsRouter.get(
+    '/closestairport',
+    async (request: Request, response: Response, next: NextFunction) => {
+        const { lat, lng } = request.query;
 
-flightsRouter.get('/fetchbooking', async (request: Request, response: Response, next: NextFunction) => {
-    const {flightOrderId}: {flightOrderId: string} = request.body;
+        const getNearestAirportBody = {
+            latitude: lat, //number
+            longitude: lng, //number
+        };
 
-    // retrieve a booked flight
-    amadeus.booking.flightOrder(flightOrderId).get().then((res: AmadeusResponse) => {
-        console.log(res.body)
-        return response.status(200).json(res.body)
-    }).catch((e: any) => {
-        return next(e);
-    });
-})
+        callAmadeusService(
+            amadeus.referenceData.locations.airports,
+            'get',
+            getNearestAirportBody,
+            response,
+            next,
+        );
+    },
+);
 
-flightsRouter.delete('/deletebooking', async (request: Request, response: Response, next: NextFunction) => {
-    const {flightOrderId}: {flightOrderId: string} = request.body;
+flightsRouter.get(
+    '/cheapestdates',
+    async (request: Request, response: Response, next: NextFunction) => {
+        const { origin, destination } = request.body;
 
-    // delete a booked flight
-    amadeus.booking.flightOrder(flightOrderId).delete().then((res: AmadeusResponse) => {
-        console.log(res.body)
-        return response.status(200).json(res.body)
-    }).catch((e: any) => {
-        return next(e);
-    });
-})
+        const getCheapestDatesBody = {
+            origin: origin, //string
+            destination: destination, //string
+        };
 
-flightsRouter.get('/airlinenamelookup', async (request: Request, response: Response, next: NextFunction) => {
-    const {airlineCode}: {airlineCode: string} = request.body;
+        callAmadeusService(
+            amadeus.shopping.flightDates,
+            'get',
+            getCheapestDatesBody,
+            response,
+            next,
+        );
+    },
+);
 
-    // What's the airline name for the IATA code BA?
-    amadeus.referenceData.airlines.get({
-        airlineCodes: airlineCode // string e.g. 'BA'
-    }).then((res: AmadeusResponse) => {
-        console.log(res.body)
-        return response.status(200).json(res.body)
-    }).catch((e: any) => {
-        return next(e);
-    });
-})
+flightsRouter.get(
+    '/priceanalysis',
+    async (request: Request, response: Response, next: NextFunction) => {
+        const { originIataCode, destinationIataCode, departureDate } =
+            request.body;
 
-flightsRouter.get('/recommendedlocation', async (request: Request, response: Response, next: NextFunction) => {
-    const {cityCodes, travelerCountryCode}: {cityCodes: string, travelerCountryCode: string} = request.body;
+        const getPriceAnalysisBody = {
+            originIataCode: originIataCode, //string
+            destinationIataCode: destinationIataCode, //string
+            departureDate: departureDate, //string e.g. '2022-01-13'
+        };
+        callAmadeusService(
+            amadeus.shopping.flightDates,
+            'get',
+            getPriceAnalysisBody,
+            response,
+            next,
+        );
+    },
+);
 
-    amadeus.referenceData.recommendedLocations.get({
-        cityCodes: cityCodes,
-        travelerCountryCode: travelerCountryCode
-    }).then((res: AmadeusResponse) => {
-        console.log(res.body)
-        return response.status(200).json(res.body)
-    }).catch((e: any) => {
-        return next(e);
-    });
-})
+flightsRouter.get(
+    '/checkinlink',
+    async (request: Request, response: Response, next: NextFunction) => {
+        const { airlineCode }: { airlineCode: string } = request.body;
+
+        callAmadeusService(
+            amadeus.referenceData.urls.checkinLinks,
+            'get',
+            { airlineCode },
+            response,
+            next,
+        );
+    },
+);
+
+flightsRouter.get(
+    '/airportinfo',
+    async (request: Request, response: Response, next: NextFunction) => {
+        const { iataCode }: { iataCode?: string } = request.query;
+
+        // What's the city name for the IATA code PAR?
+        amadeus.referenceData
+            .location(`A${iataCode}`)
+            .get()
+            .then((res: AmadeusResponse) => {
+                return response.status(200).json(res.body);
+            })
+            .catch((e: any) => {
+                return next(e);
+            });
+    },
+);
+
+flightsRouter.get(
+    '/searchcity',
+    async (request: Request, response: Response, next: NextFunction) => {
+        const { searchString }: { searchString: string } = request.body;
+
+        callAmadeusService(
+            amadeus.referenceData.locations.cities,
+            'get',
+            { keyword: searchString },
+            response,
+            next,
+        );
+    },
+);
+
+flightsRouter.get(
+    '/searchairport',
+    async (request: Request, response: Response, next: NextFunction) => {
+        const { searchString }: { searchString?: string } = request.body;
+
+        const getAirportBody = {
+            keyword: searchString, // string e.g. 'Paris'
+            subType: Amadeus.location.any,
+        };
+
+        callAmadeusService(
+            amadeus.referenceData.locations,
+            'get',
+            getAirportBody,
+            response,
+            next,
+        );
+    },
+);
+
+flightsRouter.get(
+    '/fetchbooking',
+    async (request: Request, response: Response, next: NextFunction) => {
+        const { flightOrderId }: { flightOrderId: string } = request.body;
+
+        // retrieve a booked flight
+        amadeus.booking
+            .flightOrder(flightOrderId)
+            .get()
+            .then((res: AmadeusResponse) => {
+                return response.status(200).json(res.body);
+            })
+            .catch((e: any) => {
+                return next(e);
+            });
+    },
+);
+
+flightsRouter.delete(
+    '/deletebooking',
+    async (request: Request, response: Response, next: NextFunction) => {
+        const { flightOrderId }: { flightOrderId: string } = request.body;
+
+        // delete a booked flight
+        amadeus.booking
+            .flightOrder(flightOrderId)
+            .delete()
+            .then((res: AmadeusResponse) => {
+                return response.status(200).json(res.body);
+            })
+            .catch((e: any) => {
+                return next(e);
+            });
+    },
+);
+
+flightsRouter.get(
+    '/airlinenamelookup',
+    async (request: Request, response: Response, next: NextFunction) => {
+        const { airlineCode }: { airlineCode: string } = request.body;
+
+        callAmadeusService(
+            amadeus.referenceData.airlines,
+            'get',
+            { airlineCodes: airlineCode },
+            response,
+            next,
+        );
+    },
+);
+
+flightsRouter.get(
+    '/recommendedlocation',
+    async (request: Request, response: Response, next: NextFunction) => {
+        const {
+            cityCodes,
+            travelerCountryCode,
+        }: { cityCodes: string; travelerCountryCode: string } = request.body;
+
+        const getRecommendedLocationBody = {
+            cityCodes: cityCodes, // string e.g. 'PAR'
+            travelerCountryCode: travelerCountryCode, // string e.g. 'FR'
+        };
+        callAmadeusService(
+            amadeus.referenceData.recommendedLocations,
+            'get',
+            getRecommendedLocationBody,
+            response,
+            next,
+        );
+    },
+);
 
 export default flightsRouter;

@@ -1,6 +1,6 @@
 import config from './utils/config';
 import express, { Application } from 'express';
-import usersRouter from'./controllers/users';
+import usersRouter from './controllers/users';
 import loginRouter from './controllers/login';
 import logoutRouter from './controllers/logout';
 import tripsRouter from './controllers/trips';
@@ -17,14 +17,14 @@ mongoose.set('strictQuery', false);
 
 logger.info(`connecting to ${config.MONGODB_URI}`);
 
-mongoose.connect(`${config.MONGODB_URI}`)
-  .then(() => {
-    logger.info('connected to MongoDB');
-  })
-  .catch((error) => {
-    logger.error(`error connecting to MongoDB: ${error.message}`);
-  });
-
+mongoose
+    .connect(`${config.MONGODB_URI}`)
+    .then(() => {
+        logger.info('connected to MongoDB');
+    })
+    .catch(error => {
+        logger.error(`error connecting to MongoDB: ${error.message}`);
+    });
 
 const app: Application = express();
 

@@ -1,4 +1,4 @@
-import mongoose, { Document, Model, Schema, model} from 'mongoose';
+import { Document, Model, Schema, model} from 'mongoose';
 
 interface TripDocument extends Document {
   type: string;
@@ -8,6 +8,7 @@ interface TripDocument extends Document {
   travellers: Array<Object>;
   transport: string[];
   userId: string,
+  includeAccomodation: boolean,
 }
 
 const tripSchema = new Schema<TripDocument>({
@@ -38,6 +39,10 @@ const tripSchema = new Schema<TripDocument>({
   ],
   transport: {
     type: [],
+    required: true,
+  },
+  includeAccomodation: {
+    type: Schema.Types.Boolean,
     required: true,
   },
   userId: Schema.Types.String,
